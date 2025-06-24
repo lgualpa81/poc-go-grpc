@@ -1,0 +1,9 @@
+**/*.pb.go
+**/*_grpc.pb.go
+
+**/*.env
+
+
+# Opcional: Ignorar binarios y carpetas temporales
+/bin/
+/tmp/
