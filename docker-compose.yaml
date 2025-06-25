@@ -1,0 +1,82 @@
+version: "3.8"
+services:
+  pg15:
+    container_name: pg15
+    image: postgres:15-alpine
+    #restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PWD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - "./db/init/:/docker-entrypoint-initdb.d/"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  auth:
+    build:
+      context: ./go-grpc-auth-svc
+    #env_file: ./go-grpc-auth-svc/pkg/config/envs/dev.env
+    environment:
+      - PORT=:50051
+      - DB_URL=postgres://${POSTGRES_USER}:${POSTGRES_PWD}@pg15:5432/auth_svc
+      - JWT_SECRET_KEY=${JWT_SECRET}
+      - TOKEN_EXPIRATION_HOURS=2
+    depends_on:
+      pg15:
+        condition: service_healthy
+    networks:
+      - backend
+
+  product:
+    build:
+      context: ./go-grpc-product-svc
+
+    environment:
+      - PORT=:50052
+      - DB_URL=postgres://${POSTGRES_USER}:${POSTGRES_PWD}@pg15:5432/product_svc
+    depends_on:
+      pg15:
+        condition: service_healthy
+    networks:
+      - backend
+
+  order:
+    build:
+      context: ./go-grpc-order-svc
+    environment:
+      - PORT=:50053
+      - DB_URL=postgres://${POSTGRES_USER}:${POSTGRES_PWD}@pg15:5432/order_svc
+      - PRODUCT_SVC_URL=product:50052
+    depends_on:
+      pg15:
+        condition: service_healthy
+    networks:
+      - backend
+
+  gateway:
+    build:
+      context: ./go-grpc-api-gateway
+    #env_file: ./go-grpc-api-gateway/pkg/config/envs/dev.env
+    ports:
+      - "${GW_PORT}:3000" # REST/HTTP
+    environment:
+      - PORT=:3000
+      - AUTH_SVC_URL=auth:50051
+      - PRODUCT_SVC_URL=product:50052
+      - ORDER_SVC_URL=order:50053
+    networks:
+      - backend
+    depends_on:
+      - auth
+      - order
+      - product
+networks:
+  backend:
+    driver: bridge

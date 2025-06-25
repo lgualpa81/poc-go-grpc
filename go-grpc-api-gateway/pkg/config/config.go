@@ -11,16 +11,21 @@ type Config struct {
 }
 
 func LoadConfig() (c Config, err error) {
-	viper.AddConfigPath("./pkg/config/envs")
-	viper.SetConfigName("dev")
-	viper.SetConfigType("env")
+	// viper.AddConfigPath("./pkg/config/envs")
+	// viper.SetConfigName("dev")
+	// viper.SetConfigType("env")
 
 	viper.AutomaticEnv()
 
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
-	}
+	viper.BindEnv("PORT")
+	viper.BindEnv("AUTH_SVC_URL")
+	viper.BindEnv("PRODUCT_SVC_URL")
+	viper.BindEnv("ORDER_SVC_URL")
+
+	// err = viper.ReadInConfig()
+	// if err != nil {
+	// 	return
+	// }
 	err = viper.Unmarshal(&c)
 	return
 }
