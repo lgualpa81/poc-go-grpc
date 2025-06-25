@@ -18,24 +18,27 @@ type Server struct {
 
 func (s *Server) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.CreateOrderResponse, error) {
 	product, err := s.ProductSvc.FindOne(req.ProductId)
+	//fmt.Printf("CreateOrder datos recibidos (raw): %+v\n", req)
+	//fmt.Printf("CreateOrder product: %+v", product)
 
 	if err != nil {
 		return &pb.CreateOrderResponse{Status: http.StatusBadRequest, Error: err.Error()}, nil
 	} else if product.Status >= http.StatusNotFound {
 		return &pb.CreateOrderResponse{Status: product.Status, Error: product.Error}, nil
-	} else if product.Data.Stock < req.Quantity {
+	} else if *product.Data.Stock < req.Quantity {
 		return &pb.CreateOrderResponse{Status: http.StatusConflict, Error: "Stock too less"}, nil
 	}
 
 	order := models.Order{
-		Price:     product.Data.Price,
+		Price:     *product.Data.Price,
 		ProductId: product.Data.Id,
+		Quantity:  req.Quantity,
 		UserId:    req.UserId,
 	}
 
 	s.H.DB.Create(&order)
 
-	res, err := s.ProductSvc.DecreaseStock(req.ProductId, order.Id)
+	res, err := s.ProductSvc.DecreaseStock(req.ProductId, order.Id, req.Quantity)
 
 	if err != nil {
 		return &pb.CreateOrderResponse{Status: http.StatusBadRequest, Error: err.Error()}, nil

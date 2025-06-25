@@ -2,6 +2,7 @@ package routes
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,7 @@ func CreateProduct(ctx *gin.Context, c pb.ProductServiceClient) {
 		return
 	}
 
+	fmt.Printf("Sending to gRPC - Name: %s, Stock: %d, Price: %f\n", body.Name, body.Stock, body.Price)
 	res, err := c.CreateProduct(context.Background(), &pb.CreateProductRequest{
 		Name:  body.Name,
 		Stock: body.Stock,

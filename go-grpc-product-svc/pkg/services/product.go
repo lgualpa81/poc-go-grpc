@@ -16,6 +16,8 @@ type Server struct {
 
 func (s *Server) CreateProduct(ctx context.Context, req *pb.CreateProductRequest) (*pb.CreateProductResponse, error) {
 	var product models.Product
+	//fmt.Printf("Datos recibidos (raw): %+v", req)
+	//fmt.Printf("Request recibida - Name: %s, Stock: %d, Price: %f\n", req.Name, req.Stock, req.Price)
 
 	product.Name = req.Name
 	product.Stock = req.Stock
@@ -43,12 +45,15 @@ func (s *Server) FindOne(ctx context.Context, req *pb.FindOneRequest) (*pb.FindO
 			Error:  result.Error.Error(),
 		}, nil
 	}
+	// Convierte el int64 a *int64 para el campo opcional
+	stock := product.Stock
+	price := product.Price
 
 	data := &pb.FindOneData{
 		Id:    product.Id,
 		Name:  product.Name,
-		Stock: product.Stock,
-		Price: product.Price,
+		Stock: &stock, // ← Puntero al valor (requerido por optional)
+		Price: &price,
 	}
 
 	return &pb.FindOneResponse{
@@ -59,7 +64,7 @@ func (s *Server) FindOne(ctx context.Context, req *pb.FindOneRequest) (*pb.FindO
 
 func (s *Server) DecreaseStock(ctx context.Context, req *pb.DecreaseStockRequest) (*pb.DecreaseStockResponse, error) {
 	var product models.Product
-
+	//fmt.Printf("DecreaseStock datos recibidos (raw): %+v", req)
 	if result := s.H.DB.First(&product, req.Id); result.Error != nil {
 		return &pb.DecreaseStockResponse{
 			Status: http.StatusNotFound,
@@ -83,7 +88,7 @@ func (s *Server) DecreaseStock(ctx context.Context, req *pb.DecreaseStockRequest
 		}, nil
 	}
 
-	product.Stock = product.Stock - 1
+	product.Stock = product.Stock - req.Quantity
 
 	s.H.DB.Save(&product)
 

@@ -25,6 +25,7 @@ func CreateOrder(ctx *gin.Context, c pb.OrderServiceClient) {
 		Quantity:  body.Quantity,
 		UserId:    userId.(int64),
 	})
+
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadGateway, err)
 		return

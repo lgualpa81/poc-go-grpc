@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/lgualpa81/go-grpc-auth-svc/pkg/db"
 	"github.com/lgualpa81/go-grpc-auth-svc/pkg/models"
@@ -50,6 +52,12 @@ func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 			Status: http.StatusNotFound,
 			Error:  "User not found",
 		}, nil
+	}
+
+	now := time.Now().UTC()
+	if err := s.H.DB.Model(&user).Update("last_login", now).Error; err != nil {
+		log.Printf("Error updating last_login: %v", err)
+		// Continuar sin fallar el login
 	}
 
 	token, _ := s.Jwt.GenerateToken(user)

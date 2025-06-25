@@ -12,9 +12,9 @@ service ProductService {
 //CreateProduct
 message CreateProductRequest {
   string name = 1;
-  string sku =2 ;
-  int64 stock = 3;
-  double price = 4;
+  //string sku =2 ;
+  int64 stock = 2;
+  double price = 3;
 }
 
 message CreateProductResponse {
@@ -28,9 +28,9 @@ message CreateProductResponse {
 message FindOneData {
   int64 id = 1;
   string name =2;
-  string sku = 3;
-  int64 stock = 4;
-  double price = 5;
+  //string sku = 3;
+  optional int64 stock = 3;
+  optional double price = 4;
 }
 
 message FindOneRequest {
@@ -47,6 +47,7 @@ message FindOneResponse {
 message DecreaseStockRequest {
   int64 id = 1;
   int64 orderId = 2;
+  int64 quantity = 3;
 }
 
 message DecreaseStockResponse {
